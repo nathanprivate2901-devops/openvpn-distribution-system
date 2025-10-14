@@ -1,0 +1,143 @@
+================================================================================
+DOCKER API - QUICK REFERENCE CARD
+================================================================================
+
+Base URL: http://localhost:3000/api/docker
+Auth:     Authorization: Bearer <JWT_TOKEN>
+Access:   Admin role required for all endpoints
+
+================================================================================
+CONTAINER OPERATIONS
+================================================================================
+
+List All Containers:
+  GET /api/docker/containers
+
+List OpenVPN Containers:
+  GET /api/docker/openvpn-containers
+
+Get Container Details:
+  GET /api/docker/containers/:id
+
+Start Container:
+  POST /api/docker/containers/:id/start
+
+Stop Container:
+  POST /api/docker/containers/:id/stop?timeout=10
+
+Restart Container:
+  POST /api/docker/containers/:id/restart
+
+Get Logs:
+  GET /api/docker/containers/:id/logs?tail=100&timestamps=true
+
+Get Stats:
+  GET /api/docker/containers/:id/stats
+
+Remove Container:
+  DELETE /api/docker/containers/:id?force=false&volumes=false
+
+================================================================================
+OPENVPN OPERATIONS
+================================================================================
+
+Create OpenVPN Container:
+  POST /api/docker/openvpn/create
+  Body: {
+    "name": "openvpn-server",
+    "port": 1194,
+    "volumes": ["/data/openvpn:/etc/openvpn"],
+    "env": ["OVPN_SERVER=vpn.example.com"],
+    "image": "kylemanna/openvpn:latest"
+  }
+
+================================================================================
+IMAGE OPERATIONS
+================================================================================
+
+List Images:
+  GET /api/docker/images?all=false
+
+Pull Image:
+  POST /api/docker/images/pull
+  Body: {
+    "imageName": "kylemanna/openvpn",
+    "tag": "latest"
+  }
+
+================================================================================
+SYSTEM INFORMATION
+================================================================================
+
+Get Docker Info:
+  GET /api/docker/info
+
+================================================================================
+QUICK TEST COMMANDS
+================================================================================
+
+# Get admin token
+TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@example.com","password":"admin123"}' \
+  | jq -r '.data.token')
+
+# Test Docker info
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/docker/info | jq
+
+# List all containers
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/docker/containers | jq
+
+# List OpenVPN containers
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/docker/openvpn-containers | jq
+
+# Get container stats
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/api/docker/containers/CONTAINER_NAME/stats | jq
+
+# Create OpenVPN container
+curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"openvpn-test","port":1194}' \
+  http://localhost:3000/api/docker/openvpn/create | jq
+
+================================================================================
+ERROR CODES
+================================================================================
+
+200 - Success
+201 - Created
+401 - Unauthorized (no/invalid token)
+403 - Forbidden (not admin)
+404 - Not Found (container/image not found)
+409 - Conflict (container name exists)
+500 - Internal Server Error
+
+================================================================================
+FEATURES
+================================================================================
+
+✓ Full container lifecycle management
+✓ Real-time logs and statistics
+✓ OpenVPN-specific operations
+✓ Image management and pulling
+✓ System information and monitoring
+✓ Volume and environment variable support
+✓ Query parameter customization
+✓ Comprehensive error handling
+✓ Winston logging integration
+✓ Admin authentication required
+
+================================================================================
+FILES
+================================================================================
+
+Controller: src/controllers/dockerController.js (845 lines)
+Routes:     src/routes/dockerRoutes.js (184 lines)
+Full Docs:  DOCKER_API.md
+
+================================================================================

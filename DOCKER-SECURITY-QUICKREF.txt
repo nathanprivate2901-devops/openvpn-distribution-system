@@ -1,0 +1,300 @@
+================================================================================
+                    DOCKER SECURITY - QUICK REFERENCE
+                     OpenVPN Distribution System
+================================================================================
+
+CRITICAL SECURITY FIXES APPLIED - October 2025
+
+--------------------------------------------------------------------------------
+WHAT WAS FIXED
+--------------------------------------------------------------------------------
+
+1. PRIVILEGED CONTAINERS - BLOCKED
+   - Privileged mode completely disabled
+   - Only NET_ADMIN capability granted
+   - Container escape attacks prevented
+
+2. VOLUME MOUNT VALIDATION - ENFORCED
+   - Only 3 paths allowed: /data/openvpn, /etc/openvpn, /var/lib/openvpn
+   - Attempts to mount sensitive paths logged and blocked
+   - Prevents access to /etc/shadow, /root, etc.
+
+3. DATABASE PORT - REMOVED
+   - MySQL no longer exposed to host
+   - Only accessible via internal Docker network
+   - Reduces attack surface significantly
+
+4. DOCKER SOCKET - DOCUMENTED
+   - Security warnings added
+   - Production recommendations provided
+   - Socket proxy solution documented
+
+--------------------------------------------------------------------------------
+ALLOWED VOLUME PATHS (Whitelist)
+--------------------------------------------------------------------------------
+
+   /data/openvpn          - OpenVPN data directory
+   /etc/openvpn           - OpenVPN configuration
+   /var/lib/openvpn       - OpenVPN library files
+
+ANYTHING ELSE WILL BE REJECTED
+
+--------------------------------------------------------------------------------
+QUICK VERIFICATION
+--------------------------------------------------------------------------------
+
+Check Privileged Mode is Disabled:
+  $ grep "Privileged: false" src/controllers/dockerController.js
+
+Check Volume Whitelist Exists:
+  $ grep -A3 "ALLOWED_VOLUME_PATHS" src/controllers/dockerController.js
+
+Check MySQL Port Not Exposed:
+  $ grep -A5 "mysql:" docker-compose.yml | grep "ports:"
+  (No output = GOOD)
+
+Test Container Creation:
+  $ docker inspect <container> | jq '.[0].HostConfig.Privileged'
+  (Must return: false)
+
+--------------------------------------------------------------------------------
+SECURITY WARNINGS
+--------------------------------------------------------------------------------
+
+WARNING: Docker socket access = root-equivalent privileges
+WARNING: Always use strong JWT secrets (min 256 bits)
+WARNING: Change default admin password immediately
+WARNING: Never expose database ports to host
+WARNING: Review logs regularly for suspicious activity
+
+--------------------------------------------------------------------------------
+PRODUCTION DEPLOYMENT CHECKLIST
+--------------------------------------------------------------------------------
+
+CRITICAL (Must Do):
+  [ ] Change default admin password
+  [ ] Generate strong JWT secret (openssl rand -base64 32)
+  [ ] Implement Docker socket proxy
+  [ ] Enable HTTPS with valid certificates
+  [ ] Configure firewall rules
+  [ ] Set up monitoring and alerting
+  [ ] Enable automated backups
+
+HIGH PRIORITY:
+  [ ] Set up centralized logging
+  [ ] Implement security scanning
+  [ ] Configure rate limiting per user
+  [ ] Set up intrusion detection
+  [ ] Review and update volume whitelist
+  [ ] Enable multi-factor authentication
+
+--------------------------------------------------------------------------------
+DOCKER SOCKET PROXY (Recommended for Production)
+--------------------------------------------------------------------------------
+
+Add to docker-compose.yml:
+
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      INFO: 1
+      NETWORKS: 0
+      VOLUMES: 0
+      POST: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - openvpn-network
+
+  backend:
+    environment:
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+    # Remove direct socket mount
+
+--------------------------------------------------------------------------------
+LOG MONITORING
+--------------------------------------------------------------------------------
+
+Application Logs:
+  $ tail -f logs/combined.log
+
+Error Logs:
+  $ tail -f logs/error.log
+
+Docker Logs:
+  $ docker-compose logs -f backend
+
+Search for Security Events:
+  $ grep "unauthorized volumes" logs/combined.log
+  $ grep "Access denied" logs/combined.log
+  $ grep "creating OpenVPN container" logs/combined.log
+
+--------------------------------------------------------------------------------
+ALERT TRIGGERS
+--------------------------------------------------------------------------------
+
+IMMEDIATE ALERT:
+  - Unauthorized volume mount attempts
+  - 5+ failed admin logins in 5 minutes
+  - Unexpected privileged containers detected
+  - Database connection from external source
+
+WARNING ALERT:
+  - 10+ containers created in 1 hour
+  - Resource limit violations
+  - Unusual API usage patterns
+
+--------------------------------------------------------------------------------
+INCIDENT RESPONSE
+--------------------------------------------------------------------------------
+
+If Container Escape Suspected:
+
+  1. Stop all containers immediately:
+     $ docker stop $(docker ps -q)
+
+  2. Disconnect network:
+     $ docker network disconnect openvpn-network openvpn-backend
+
+  3. Collect logs:
+     $ docker logs openvpn-backend > incident-$(date +%s).log
+     $ cp logs/combined.log incident-full-$(date +%s).log
+
+  4. Investigate and remediate
+
+  5. DO NOT restart until root cause identified
+
+--------------------------------------------------------------------------------
+TEST COMMANDS
+--------------------------------------------------------------------------------
+
+Test Valid Volume Mount (Should Succeed):
+  $ curl -X POST http://localhost:3000/api/docker/openvpn/create \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"test-valid","volumes":["/data/openvpn:/etc/openvpn"]}'
+
+Test Invalid Volume Mount (Should Fail with 403):
+  $ curl -X POST http://localhost:3000/api/docker/openvpn/create \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"test-invalid","volumes":["/etc/shadow:/etc/shadow"]}'
+
+Test Database Port (Should Be Closed):
+  $ nc -zv localhost 3306
+  (Should fail or timeout)
+
+Inspect Container Security:
+  $ docker inspect <container> | jq '{
+      Privileged: .[0].HostConfig.Privileged,
+      CapAdd: .[0].HostConfig.CapAdd,
+      Memory: .[0].HostConfig.Memory,
+      SecurityOpt: .[0].HostConfig.SecurityOpt
+    }'
+
+--------------------------------------------------------------------------------
+RESOURCE LIMITS (Enforced)
+--------------------------------------------------------------------------------
+
+Per Container:
+  - Memory: 512 MB
+  - Swap: 1 GB
+  - CPU Shares: 1024 (default priority)
+  - No new privileges allowed
+
+--------------------------------------------------------------------------------
+SECURITY TOOLS
+--------------------------------------------------------------------------------
+
+Docker Security Scan:
+  $ docker run --rm -it \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    aquasec/docker-bench-security
+
+Image Vulnerability Scan:
+  $ trivy image openvpn-backend
+
+Container Runtime Security:
+  $ falco -r /etc/falco/rules.yaml
+
+--------------------------------------------------------------------------------
+FIREWALL CONFIGURATION
+--------------------------------------------------------------------------------
+
+Recommended UFW Rules:
+
+  $ sudo ufw allow 443/tcp      # HTTPS
+  $ sudo ufw allow 1194/udp     # OpenVPN
+  $ sudo ufw deny 3306/tcp      # MySQL (block external)
+  $ sudo ufw deny 2375/tcp      # Docker API (block external)
+  $ sudo ufw enable
+
+Verify:
+  $ sudo ufw status verbose
+
+--------------------------------------------------------------------------------
+PERFORMANCE IMPACT
+--------------------------------------------------------------------------------
+
+Expected Changes:
+  - Container creation: +10-50ms (validation overhead)
+  - API response time: No significant change
+  - Database performance: Improved (no external overhead)
+  - Memory usage: Slightly higher (resource enforcement)
+
+--------------------------------------------------------------------------------
+EMERGENCY CONTACTS
+--------------------------------------------------------------------------------
+
+Security Issue:
+  - Review: /mnt/e/MYCOMPANY/TNam/DOCKER-SECURITY.md
+  - Check logs: /mnt/e/MYCOMPANY/TNam/logs/
+  - Escalate to security team if needed
+
+Documentation:
+  - Full Security Guide: DOCKER-SECURITY.md
+  - API Documentation: DOCKER_API.md
+  - Fix Summary: SECURITY-FIXES-SUMMARY.md
+  - Project Overview: CLAUDE.md
+
+--------------------------------------------------------------------------------
+COMPLIANCE NOTES
+--------------------------------------------------------------------------------
+
+GDPR:
+  - User data protected behind authentication
+  - Audit logging enabled
+  - Right to deletion supported
+
+PCI DSS (if applicable):
+  - Network segmentation implemented
+  - Access control enforced
+  - Logging and monitoring in place
+
+SOC 2:
+  - Security controls documented
+  - Availability measures implemented
+  - Confidentiality protections active
+
+--------------------------------------------------------------------------------
+KEY TAKEAWAYS
+--------------------------------------------------------------------------------
+
+1. Privileged containers are BLOCKED - container escape prevented
+2. Volume mounts are VALIDATED - sensitive files protected
+3. Database port is REMOVED - attack surface reduced
+4. Socket access is DOCUMENTED - risks clearly communicated
+5. Resource limits are ENFORCED - DoS attacks mitigated
+6. Audit logging is ENHANCED - security events tracked
+
+SECURITY POSTURE: Significantly improved while maintaining functionality
+
+--------------------------------------------------------------------------------
+LAST UPDATED: October 14, 2025
+VERSION: 1.0
+STATUS: Production Ready (after checklist completion)
+================================================================================
+
+For detailed information, see: /mnt/e/MYCOMPANY/TNam/DOCKER-SECURITY.md

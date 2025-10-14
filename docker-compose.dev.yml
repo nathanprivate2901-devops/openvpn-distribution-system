@@ -1,0 +1,35 @@
+# Docker Compose Override for Development
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  backend:
+    build:
+      target: builder
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    volumes:
+      # Mount source code for hot-reload
+      - ./src:/app/src:ro
+      - ./package*.json:/app/
+      # Named volume for node_modules (don't override)
+      - node_modules:/app/node_modules
+    command: ["npm", "run", "dev"]
+    ports:
+      # Expose additional debug port
+      - "9229:9229"
+
+  mysql:
+    ports:
+      # Expose MySQL for external tools
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password
+      MYSQL_DATABASE: openvpn_dev
+      MYSQL_USER: dev_user
+      MYSQL_PASSWORD: dev_password
+
+volumes:
+  node_modules:
