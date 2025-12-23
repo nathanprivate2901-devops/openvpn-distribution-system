@@ -209,3 +209,8 @@ easy-rsa/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
+
+# ==================================
+# Claude AI
+# ==================================
+.claude/
