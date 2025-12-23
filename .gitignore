@@ -1,0 +1,211 @@
+# ==================================
+# Node.js & NPM
+# ==================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ==================================
+# Environment Variables
+# ==================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# ==================================
+# Logs
+# ==================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ==================================
+# Build & Distribution
+# ==================================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# ==================================
+# Testing
+# ==================================
+coverage/
+*.lcov
+.nyc_output/
+lib-cov/
+.grunt/
+.lock-wscript
+
+# ==================================
+# IDEs & Editors
+# ==================================
+# Visual Studio Code
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.code-workspace
+
+# JetBrains IDEs (IntelliJ, WebStorm, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+.idea_modules/
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ==================================
+# Operating Systems
+# ==================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ==================================
+# Docker
+# ==================================
+.dockerignore
+docker-compose.override.yml
+*.tar
+
+# ==================================
+# SSL Certificates & Keys
+# ==================================
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+*.cer
+ssl/
+certs/
+certificates/
+
+# ==================================
+# Database
+# ==================================
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+
+# ==================================
+# Temporary Files
+# ==================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+*.swp
+*.swo
+
+# ==================================
+# OpenVPN Specific
+# ==================================
+# Generated OpenVPN config files
+configs/
+*.ovpn
+openvpn-configs/
+
+# OpenVPN keys and certificates (if stored locally)
+keys/
+pki/
+easy-rsa/
+
+# ==================================
+# Miscellaneous
+# ==================================
+.eslintcache
+.stylelintcache
+.npm
+.yarn-integrity
+.env.test
+.cache
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vuepress/dist
+.temp
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/

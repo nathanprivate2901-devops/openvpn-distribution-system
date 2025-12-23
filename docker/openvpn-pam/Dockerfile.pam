@@ -1,0 +1,20 @@
+# Dockerfile to add PAM MySQL authentication to OpenVPN Access Server
+FROM openvpn/openvpn-as:latest
+
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y \
+    libpam-mysql \
+    libpam-modules \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy PAM configuration
+COPY pam_mysql.conf /etc/pam_mysql.conf
+RUN chmod 600 /etc/pam_mysql.conf
+
+# Configure PAM to use MySQL for OpenVPN authentication
+RUN echo "auth required pam_mysql.so config_file=/etc/pam_mysql.conf" > /etc/pam.d/openvpn && \
+    echo "account required pam_mysql.so config_file=/etc/pam_mysql.conf" >> /etc/pam.d/openvpn
+
+# Keep original entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]

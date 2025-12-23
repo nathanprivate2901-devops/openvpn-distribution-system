@@ -1,0 +1,23 @@
+/**
+ * Alternative Solution 3: Use composite device identifier
+ * This would change device_id to include user_id in the identifier
+ * Example: "16_172.27.228.2" instead of just "172.27.228.2"
+ * 
+ * This avoids conflicts without changing the database schema
+ */
+
+// In vpnMonitor.js, change this line:
+// const uniqueDeviceKey = client.virtualAddress || client.realIp;
+
+// To this:
+// const uniqueDeviceKey = `${userId}_${client.virtualAddress || client.realIp}`;
+
+// Pros:
+// - No database migration needed
+// - Works with existing schema
+// - Simple to implement
+
+// Cons:
+// - Less intuitive device_id values
+// - Historical data needs migration
+// - Device IDs become longer
