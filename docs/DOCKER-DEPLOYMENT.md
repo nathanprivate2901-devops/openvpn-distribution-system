@@ -44,8 +44,9 @@ docker-compose --version
 ### 1. Clone and Configure
 
 ```bash
-# Navigate to project directory
-cd /mnt/e/MYCOMPANY/TNam
+# Clone the repository
+git clone https://github.com/nathanprivate2901-devops/openvpn-distribution-system.git
+cd openvpn-distribution-system
 
 # Copy environment template
 cp .env.example .env
@@ -56,20 +57,51 @@ nano .env  # or use your preferred editor
 
 **Required Environment Variables:**
 ```bash
-JWT_SECRET=your-strong-secret-here-min-32-chars
+# JWT Secret (minimum 32 characters - generate securely)
+JWT_SECRET=your-strong-secret-here-min-32-chars-use-random-generator
+
+# Database Configuration
+DB_HOST=mysql
+DB_NAME=openvpn_system
+DB_USER=openvpn_user
+DB_PASSWORD=your-secure-database-password
+
+# SMTP Configuration (for email verification)
 SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
+
+# Application URLs
+FRONTEND_URL=http://localhost:3001
+API_URL=http://localhost:3000
+
+# OpenVPN Configuration
+OPENVPN_SERVER=your.vpn.server.com
+OPENVPN_PORT=1194
+
+# Docker Socket (for container management)
+DOCKER_SOCKET_PATH=/var/run/docker.sock
 ```
 
 ### 2. Build and Start Services
 
 ```bash
-# Build and start all services
+# Development environment (with hot-reload)
+docker-compose -f docker-compose.dev.yml up -d
+
+# Production environment
 docker-compose up -d
 
-# View logs
+# Build and start all services
+docker-compose up -d --build
+
+# View logs from all services
 docker-compose logs -f
+
+# View logs from specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
 
 # Check service status
 docker-compose ps
@@ -79,8 +111,10 @@ docker-compose ps
 
 - **Frontend (Web UI):** http://localhost:3001
 - **Backend API:** http://localhost:3000
+- **API Documentation:** http://localhost:3000/api-docs
 - **Health Check:** http://localhost:3000/health
-- **Default Login:** admin@example.com / admin123
+- **MySQL Database:** localhost:3306 (internal to Docker network)
+- **Default Login:** admin@example.com / admin123 ⚠️ **Change immediately!**
 
 ## Architecture
 
